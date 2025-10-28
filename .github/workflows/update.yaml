@@ -1,0 +1,30 @@
+name: Update
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "15 22 * * *"
+jobs:
+  build:
+    name: Update
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Update rule-set branch
+        run: |
+          ./ruleset_gen
+          mkdir -p rule-set
+          cd rule-set
+          git init
+          git config --local user.email "github-action@users.noreply.github.com"
+          git config --local user.name "GitHub Action"
+          git remote add origin "https://${{ github.actor }}:${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}"
+          git branch -M rule-set
+          cp ../srslist.h .
+          git add .
+          git commit -m "Update rule-set on $(date '+%Y-%m-%d %H:%M')"
+          git push -f origin rule-set
